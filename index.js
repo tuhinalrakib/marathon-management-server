@@ -51,8 +51,15 @@ async function run() {
     })
 
     app.get("/marathons", async (req,res)=>{
-        const result = await marathonscollection.find().toArray()
-        res.send(result)
+        const email = req.query.email 
+        if(email){
+          const query = { organizerEmail : email}
+          const result = await marathonscollection.find(query).toArray()
+          res.send(result)
+        }else{
+          const result = await marathonscollection.find().toArray()
+          res.send(result)
+        } 
     })
 
 
