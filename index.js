@@ -30,6 +30,7 @@ async function run() {
     await client.connect();
 
     const userCollection = client.db("marathonDb").collection("users")
+    const marathonscollection = client.db("marathonDb").collection('marathons')
 
     app.post("/users", async(req,res)=>{
         const newUser = req.body 
@@ -39,6 +40,18 @@ async function run() {
 
     app.get("/users", async(req,res)=>{
         const result = await userCollection.find().toArray()
+        res.send(result)
+    })
+
+    // Marathons Related APIs
+    app.post("/marathons", async(req,res)=>{
+        const newMarathon = req.body
+        const result = await marathonscollection.insertOne(newMarathon)
+        res.send(result)
+    })
+
+    app.get("/marathons", async (req,res)=>{
+        const result = await marathonscollection.find().toArray()
         res.send(result)
     })
 
