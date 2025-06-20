@@ -50,15 +50,15 @@ async function run() {
 
       res.cookie('token', token, {
         httpOnly: true,
-        secure: true,
-        sameSite: 'none'
+        secure: process.env.NODE_ENV === "production",
+        // sameSite: "Lax",
+        // maxAge: 7 * 24 * 60 * 60 * 1000,
       })
         .send({ message: "JWT Created Successfully" })
     })
 
     app.post('/logout', (req, res) => {
-      res.clearCookie('token');
-      res.send({ message: 'Logout success' });
+      res.clearCookie('token').send({ message: 'Logout success' });
     });
 
 

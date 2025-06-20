@@ -10,7 +10,7 @@ const verifyJWT = (req, res, next) => {
     jwt.verify(token, process.env.JWT_SECRET_KEY, (err, deocoded) => {
         if (err) {
             console.log(err)
-            return res.status(401).send({ message: "Unauthorized Access" })
+            return res.status(403).send({ message: "Unauthorized Access" })
         }
         req.tokenEmail = deocoded.email
         next()
