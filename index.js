@@ -1,15 +1,23 @@
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const express = require('express')
 const cors = require("cors")
+const cookieParser = require("cookie-parser")
 const port = process.env.PORT || 3000
 const app = express()
+const jwt = require('jsonwebtoken')
+const { verifyJWT } = require("./middlewares/verifyJWT")
+// const { verifyTokenEmail } = require("./middlewares/VerifyTokenEmail")
 require("dotenv").config()
 
-app.use(cors())
+app.use(cors({
+  origin: ['http://localhost:5173','https://marathon-management-8b5cc.web.app/'],
+  credentials: true
+}))
 app.use(express.json())
+app.use(cookieParser())
 
-app.get("/", async (req,res)=>{
-    res.send("Marathon Management Server")
+app.get("/", async (req, res) => {
+  res.send("Marathon Management Server")
 })
 
 
@@ -32,34 +40,95 @@ async function run() {
     const userCollection = client.db("marathonDb").collection("users")
     const marathonscollection = client.db("marathonDb").collection('marathons')
 
-    app.post("/users", async(req,res)=>{
-        const newUser = req.body 
-        const result = await userCollection.insertOne(newUser)
-        res.send(result)
+    // =================generate JWT===========================
+    app.post("/jwt", (req, res) => {
+      //  user hosse payload data
+      const user = { email: req.body.email }
+      // token create
+      const token = jwt.sign(user, process.env.JWT_SECRET_KEY, { expiresIn: "7d" })
+
+      res.cookie('token', token, {
+        httpOnly: true,
+        secure: false
+      })
+        .send({ message: "JWT Created Successfully" })
     })
 
-    app.get("/users", async(req,res)=>{
-        const result = await userCollection.find().toArray()
-        res.send(result)
+    app.post('/logout', (req, res) => {
+      res.clearCookie('token');
+      res.send({ message: 'Logout success' });
+    });
+
+
+    // ===================users related api=====================
+    app.post("/users", async (req, res) => {
+      const newUser = req.body
+      const result = await userCollection.insertOne(newUser)
+      res.send(result)
     })
 
-    // Marathons Related APIs
-    app.post("/marathons", async(req,res)=>{
-        const newMarathon = req.body
-        const result = await marathonscollection.insertOne(newMarathon)
-        res.send(result)
+    app.get("/users", async (req, res) => {
+      const result = await userCollection.find().toArray()
+      res.send(result)
     })
 
-    app.get("/marathons", async (req,res)=>{
-        const email = req.query.email 
-        if(email){
-          const query = { organizerEmail : email}
-          const result = await marathonscollection.find(query).toArray()
-          res.send(result)
-        }else{
-          const result = await marathonscollection.find().toArray()
-          res.send(result)
-        } 
+
+    // =================Marathons Related APIs========================
+    app.post("/marathons", async (req, res) => {
+      const newMarathon = req.body
+      const result = await marathonscollection.insertOne(newMarathon)
+      res.send(result)
+    })
+
+    app.get("/marathons", async (req, res) => {
+      const limit = 6
+
+      if (limit) {
+        const result = await marathonscollection.find().limit(limit).toArray()
+        return res.send(result)
+      }
+
+      const result = await marathonscollection.find().toArray()
+      return res.send(result)
+    })
+
+    app.get('/myMarathons/:email', verifyJWT, async (req, res) => {
+      const email = req.params.email
+      const decodedEmail = req.tokenEmail
+      if (email !== decodedEmail) {
+        return res.status(403).send({ message: 'Forbidden Access' })
+      }
+      const query = { organizerEmail: email }
+      const result = await marathonscollection.find(query).toArray()
+      return res.send(result)
+    })
+
+
+    app.get("/marathons/:id",verifyJWT, async(req,res)=>{
+      const id = req.params.id
+      const filter = { _id : new ObjectId(id) }
+      const result = await marathonscollection.findOne(filter)
+      res.send(result)
+    })
+
+    app.delete("/marathons/:id", async (req, res) => {
+      const id = req.params.id
+      const filter = { _id: new ObjectId(id) }
+      const result = await marathonscollection.deleteOne(filter)
+      res.send(result)
+    })
+
+
+    app.put("/marathons/:id", async (req, res) => {
+      const id = req.params.id
+      const filter = { _id: new ObjectId(id) }
+      const option = { upsert: true }
+      const updateMarathon = req.body
+      const updateDoc = {
+        $set: updateMarathon
+      }
+      const result = await marathonscollection.updateOne(filter, updateDoc, option)
+      res.send(result)
     })
 
 
@@ -74,6 +143,6 @@ async function run() {
 run().catch(console.dir);
 
 
-app.listen(port, ()=>{
-    console.log(`App listeing from port: ${port}`)
-})
+app.listen(port, () => {
+  console.log(`App listeing from port: ${port}`)
+});
