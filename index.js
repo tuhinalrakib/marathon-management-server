@@ -10,9 +10,10 @@ const { verifyJWT } = require("./middlewares/verifyJWT")
 require("dotenv").config()
 
 app.use(cors({
-  origin: ['https://marathon-management-8b5cc.web.app/'],
+  origin: 'https://marathon-management-8b5cc.web.app',
   credentials: true
 }))
+
 app.use(express.json())
 app.use(cookieParser())
 
@@ -49,7 +50,8 @@ async function run() {
 
       res.cookie('token', token, {
         httpOnly: true,
-        secure: false
+        secure: true,
+        sameSite: 'none'
       })
         .send({ message: "JWT Created Successfully" })
     })
