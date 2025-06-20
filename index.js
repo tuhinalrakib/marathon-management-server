@@ -10,7 +10,8 @@ const { verifyJWT } = require("./middlewares/verifyJWT")
 require("dotenv").config()
 
 app.use(cors({
-  origin: 'https://marathon-management-8b5cc.web.app',
+  // origin: 'https://marathon-management-8b5cc.web.app',
+  origin: 'http://localhost:5173',
   credentials: true
 }))
 
@@ -51,8 +52,6 @@ async function run() {
       res.cookie('token', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        // sameSite: "Lax",
-        // maxAge: 7 * 24 * 60 * 60 * 1000,
       })
         .send({ message: "JWT Created Successfully" })
     })
@@ -83,16 +82,33 @@ async function run() {
     })
 
     app.get("/marathons", async (req, res) => {
-      const limit = 6
+      const { id, limit } = req.query;
 
-      if (limit) {
-        const result = await marathonscollection.find().limit(limit).toArray()
-        return res.send(result)
+      try {
+        if (id) {
+          const result = await marathonscollection.findOne({ _id: new ObjectId(id) });
+
+          if (result) {
+            return res.send(result);
+          } else {
+            return res.status(404).send({ message: "Marathon not found" });
+          }
+        }
+
+        if (limit) {
+          const limitedResult = await marathonscollection.find().limit(parseInt(limit)).toArray();
+          return res.send(limitedResult);
+        }
+
+        const allResult = await marathonscollection.find().toArray();
+        return res.send(allResult);
+
+      } catch (error) {
+        console.error("Error fetching marathons:", error);
+        return res.status(500).send({ message: "Server error", error: error.message });
       }
+    });
 
-      const result = await marathonscollection.find().toArray()
-      return res.send(result)
-    })
 
     app.get('/myMarathons/:email', verifyJWT, async (req, res) => {
       const email = req.params.email
@@ -106,12 +122,6 @@ async function run() {
     })
 
 
-    app.get("/marathons/:id",verifyJWT, async(req,res)=>{
-      const id = req.params.id
-      const filter = { _id : new ObjectId(id) }
-      const result = await marathonscollection.findOne(filter)
-      res.send(result)
-    })
 
     app.delete("/marathons/:id", async (req, res) => {
       const id = req.params.id
