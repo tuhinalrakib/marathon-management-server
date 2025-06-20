@@ -109,16 +109,12 @@ async function run() {
     });
 
 
-    app.get('/myMarathons/:email', verifyJWT, async (req, res) => {
-      const email = req.params.email
-      const decodedEmail = req.tokenEmail
-      if (email !== decodedEmail) {
-        return res.status(403).send({ message: 'Forbidden Access' })
-      }
-      const query = { organizerEmail: email }
-      const result = await marathonscollection.find(query).toArray()
-      return res.send(result)
-    })
+    app.get('/myMarathons', verifyJWT, async (req, res) => {
+      const email = req.tokenEmail;
+      const query = { organizerEmail: email };
+      const result = await marathonscollection.find(query).toArray();
+      return res.send(result);
+    });
 
 
 
