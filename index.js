@@ -10,8 +10,7 @@ const { verifyJWT } = require("./middlewares/verifyJWT")
 require("dotenv").config()
 
 app.use(cors({
-  // origin: 'https://marathon-management-8b5cc.web.app',
-  origin: 'http://localhost:5173',
+  origin: 'https://marathon-management-8b5cc.web.app',
   credentials: true
 }))
 
