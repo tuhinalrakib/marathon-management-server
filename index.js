@@ -6,11 +6,10 @@ const port = process.env.PORT || 3000
 const app = express()
 const jwt = require('jsonwebtoken')
 const { verifyJWT } = require("./middlewares/verifyJWT")
-// const { verifyTokenEmail } = require("./middlewares/VerifyTokenEmail")
 require("dotenv").config()
 
 app.use(cors({
-  origin: 'https://marathon-management-8b5cc.web.app',
+  origin: ['http://localhost:5173','https://marathon-management-8b5cc.web.app'],
   credentials: true
 }))
 
@@ -50,7 +49,7 @@ async function run() {
 
       res.cookie('token', token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: false
       })
         .send({ message: "JWT Created Successfully" })
     })
