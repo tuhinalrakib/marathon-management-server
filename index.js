@@ -9,7 +9,7 @@ const { verifyJWT } = require("./middlewares/verifyJWT")
 require("dotenv").config()
 
 app.use(cors({
-  origin: ['http://localhost:5173','https://marathon-management-8b5cc.web.app'],
+  origin: ['http://localhost:5173', 'https://marathon-management-8b5cc.web.app'],
   credentials: true
 }))
 
@@ -32,6 +32,12 @@ const client = new MongoClient(uri, {
   }
 });
 
+const cookieOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+      };
+
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -46,16 +52,15 @@ async function run() {
       const user = { email: req.body.email }
       // token create
       const token = jwt.sign(user, process.env.JWT_SECRET_KEY, { expiresIn: "7d" })
-
-      res.cookie('token', token, {
-        httpOnly: true,
-        secure: false
-      })
+      
+      res.cookie('token', token, cookieOptions)
         .send({ message: "JWT Created Successfully" })
     })
 
     app.post('/logout', (req, res) => {
-      res.clearCookie('token').send({ message: 'Logout success' });
+      res
+        .clearCookie("token", { ...cookieOptions, maxAge: 0 })
+        .send({ success: true });
     });
 
 
