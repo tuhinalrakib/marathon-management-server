@@ -33,10 +33,10 @@ const client = new MongoClient(uri, {
 });
 
 const cookieOptions = {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-      };
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+};
 
 async function run() {
   try {
@@ -45,6 +45,7 @@ async function run() {
 
     const userCollection = client.db("marathonDb").collection("users")
     const marathonscollection = client.db("marathonDb").collection('marathons')
+    const applyCollection = client.db("marathonDb").collection('apply')
 
     // =================generate JWT===========================
     app.post("/jwt", (req, res) => {
@@ -52,7 +53,7 @@ async function run() {
       const user = { email: req.body.email }
       // token create
       const token = jwt.sign(user, process.env.JWT_SECRET_KEY, { expiresIn: "7d" })
-      
+
       res.cookie('token', token, cookieOptions)
         .send({ message: "JWT Created Successfully" })
     })
@@ -85,12 +86,11 @@ async function run() {
     })
 
     app.get("/marathons", async (req, res) => {
-      const { id, limit } = req.query;
+      const { id, limit, sortOrder } = req.query;
 
       try {
         if (id) {
           const result = await marathonscollection.findOne({ _id: new ObjectId(id) });
-
           if (result) {
             return res.send(result);
           } else {
@@ -98,12 +98,26 @@ async function run() {
           }
         }
 
+        // sorting option
+        let sortOption = {};
+        if (sortOrder === "asc") {
+          sortOption = { createdAt: 1 };
+        } else if (sortOrder === "desc") {
+          sortOption = { createdAt: -1 };
+        }
+
+        // With limit and sorting
         if (limit) {
-          const limitedResult = await marathonscollection.find().limit(parseInt(limit)).toArray();
+          const limitedResult = await marathonscollection
+            .find()
+            .sort(sortOption)
+            .limit(parseInt(limit))
+            .toArray();
           return res.send(limitedResult);
         }
 
-        const allResult = await marathonscollection.find().toArray();
+        // All results with sorting
+        const allResult = await marathonscollection.find().sort(sortOption).toArray();
         return res.send(allResult);
 
       } catch (error) {
@@ -129,7 +143,6 @@ async function run() {
       res.send(result)
     })
 
-
     app.put("/marathons/:id", async (req, res) => {
       const id = req.params.id
       const filter = { _id: new ObjectId(id) }
@@ -139,6 +152,38 @@ async function run() {
         $set: updateMarathon
       }
       const result = await marathonscollection.updateOne(filter, updateDoc, option)
+      res.send(result)
+    })
+
+    app.patch('/marathons/increment/:id', async (req, res) => {
+      const id = req.params.id
+      const filter = { _id: new ObjectId(id) }
+      const updateDoc = {
+        $inc: {
+          registrationCount: 1
+        }
+      }
+      const result = await marathonscollection.updateOne(filter, updateDoc)
+      res.send(result)
+    })
+
+
+    // =================Apply Marathon Related APIs========================
+    app.post("/apply", async (req, res) => {
+      const newApply = req.body
+      const result = await applyCollection.insertOne(newApply)
+      res.send(result)
+    })
+
+    app.get("/myApply", verifyJWT, async (req, res) => {
+      const email = req.tokenEmail;
+      const title = req.query.title
+      const query = { email: email };
+
+      if (title) {
+        query.title = { $regex: title, $options: "i" }
+      }
+      const result = await applyCollection.find(query).toArray()
       res.send(result)
     })
 
