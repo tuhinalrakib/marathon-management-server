@@ -167,6 +167,24 @@ async function run() {
       res.send(result)
     })
 
+    app.patch('/marathons/decrement/:id', async (req, res) => {
+      const id = req.params.id
+      const filter = { _id: new ObjectId(id) }
+
+      const marathon = await marathonscollection.findOne(filter);
+      if (marathon.registrationCount <= 0) {
+        return res.status(400).send({ error: "registrationCount is already 0" });
+      }
+
+      const updateDoc = {
+        $inc: {
+          registrationCount: -1
+        }
+      }
+      const result = await marathonscollection.updateOne(filter, updateDoc)
+      res.send(result)
+    })
+
 
     // =================Apply Marathon Related APIs========================
     app.post("/apply", async (req, res) => {
@@ -184,6 +202,25 @@ async function run() {
         query.title = { $regex: title, $options: "i" }
       }
       const result = await applyCollection.find(query).toArray()
+      res.send(result)
+    })
+
+    app.put('/myApply/:id', async (req, res) => {
+      const id = req.params.id
+      const filter = { _id: new ObjectId(id) }
+      const option = { upsert: true }
+      const updateMarathon = req.body
+      const updateDoc = {
+        $set: updateMarathon
+      }
+      const result = await applyCollection.updateOne(filter,updateDoc,option)
+      res.send(result)
+    })
+
+    app.delete("/myApply/:id", async (req, res) => {
+      const id = req.params.id
+      const filter = { _id: new ObjectId(id) }
+      const result = await applyCollection.deleteOne(filter)
       res.send(result)
     })
 
