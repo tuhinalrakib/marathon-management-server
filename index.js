@@ -9,7 +9,7 @@ const { verifyJWT } = require("./middlewares/verifyJWT")
 require("dotenv").config()
 
 app.use(cors({
-  origin: ['http://localhost:5173', 'https://marathon-management-8b5cc.web.app'],
+  origin: ['http://localhost:5174', 'https://marathon-management-8b5cc.web.app'],
   credentials: true
 }))
 
@@ -226,7 +226,7 @@ async function run() {
 
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
