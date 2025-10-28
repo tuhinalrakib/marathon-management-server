@@ -1,7 +1,7 @@
 import express from "express";
 import authRoutes from "./authRoutes.js";
 import userRoutes from "./userRoutes.js";
-// import propertyRoutes from "./propertyRoutes.js";
+import marathonRoutes from "./marathonRoutes.js";
 // import adminRoutes from "./adminRoutes.js";
 
 const router = express.Router();
@@ -17,8 +17,8 @@ router.get("/", (req, res) => {
 // ✅ Mount route modules
 router.use("/auth", authRoutes);
 router.use("/users", userRoutes);
+router.use("/marathons", marathonRoutes);
 
-// router.use("/properties", propertyRoutes);
 // router.use("/admin", adminRoutes);
 
 // ✅ Fallback for unknown routes (handled before errorHandler)
