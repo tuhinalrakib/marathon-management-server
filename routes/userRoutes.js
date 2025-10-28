@@ -5,7 +5,7 @@ import {
   updateUser,
   deleteUser,
 } from "../controllers/userController.js";
-import { verifyJWT, authorizeRoles } from "../middleware/authMiddleware.js";
+import { verifyJWT } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 

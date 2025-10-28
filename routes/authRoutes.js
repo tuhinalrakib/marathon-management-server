@@ -7,8 +7,7 @@ import {
   logoutUser,
   oauthExchange
 } from "../controllers/authController.js";
-import { verifyJWT } from "../middleware/authMiddleware.js";
-import { verifyEmail } from "../controllers/verifyController.js"
+import { verifyJWT } from "../middlewares/authMiddleware.js";
 import { requestPasswordReset, resetPassword } from "../controllers/passwordController.js"
 
 const router = express.Router();
@@ -20,9 +19,6 @@ router.post("/register", registerUser);
 router.post("/login", loginUser);
 
 router.post("/oauth/exchange", oauthExchange)
-
-// Email verification
-router.get("/verify-email", verifyEmail);
 
 // Password reset
 router.post("/request-reset", requestPasswordReset);
